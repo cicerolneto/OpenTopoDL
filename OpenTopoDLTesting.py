@@ -18,12 +18,12 @@ class TestOpenTopoDL(unittest.TestCase):
 
 	def test_lidar_request(self):
 		with patch('__builtin__.raw_input', return_value = 'l') as _raw_input:
-			self.assertEqual(lidar_vs_raster(), 'PC_Bulk')
+			self.assertEqual(get_data_type(), 'PC_Bulk')
 			_raw_input.assert_called_once_with('Download [L]idar Point Cloud or [R]aster data: ')
 
 	def test_raster_request(self):
 		with patch('__builtin__.raw_input', return_value = 'R') as _raw_input:
-			self.assertEqual(lidar_vs_raster(), 'Raster')
+			self.assertEqual(get_data_type(), 'Raster')
 			_raw_input.assert_called_once_with('Download [L]idar Point Cloud or [R]aster data: ')
 
 

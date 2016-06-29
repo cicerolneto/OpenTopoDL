@@ -22,46 +22,49 @@ raster_name_list = []
 raster_ID_list = []
 raster_private_bit_list = []
 
-#========================================================================================
-#Function: lidar_vs_raster
-#
-#input:		None
-#
-#desc:		Return a string variable corresponding to whether the user wants Lidar or
-#			Raster data
-#========================================================================================
-def lidar_vs_raster():
+
+
+def get_data_type():
+	"""What kind of data does user want?
+
+	Args:
+		None
+
+	Returns:
+		string indicating whether user wants Lidar (PC_Bulk) or Raster data
+	"""
 	user_input = raw_input("Download [L]idar Point Cloud or [R]aster data: ")
 	if user_input == "L" or user_input == "l":
-		lidar_raster = "PC_Bulk"
-		return lidar_raster
+		desired_data = "PC_Bulk"
 	elif user_input == "R" or user_input == "r":
-		lidar_raster = "Raster"
-		return lidar_raster
+		desired_data = "Raster"
 	else:
 		print "Invalid input."
 		main("OpenTopoDL.py")
+	return desired_data
 
-#========================================================================================
-#Function: short_name_creator 															
-#																						
-#input:		lidar_raster - String to determine whether the user wants Lidar or 			
-#							Raster data 												
-#			requested_id - ID number associated with the data the user wants 			
-#			user_request - Listing number associated with the data the user wants 	
-# 																						
-#desc:		Find the 'short name' associated the requested data 						
-#========================================================================================
-def short_name_creator(lidar_raster, requested_id, user_request):
+
+
+def get_short_name(data_type, requested_id, user_request):
+	"""Find the short name of requested data
+
+	Args:
+		data_type: (string) whether the user wants lidar or raster data
+		requested_id: ID number associated with the data the user wants
+		user_request: Listing number associated with the data the user wants
+
+	Returns:
+		The short name of a datatset
+	"""
 	global lidar_private_bit_list
 	global raster_private_bit_list
 
 	short_name_line = 9
 	short_name_shear = 29
 
-	if lidar_raster == "PC_Bulk":
+	if data_type == "PC_Bulk":
 		private_bit_list = lidar_private_bit_list
-	elif lidar_raster == "Raster":
+	elif data_type == "Raster":
 		private_bit_list = raster_private_bit_list
 
 	URL = "http://opentopo.sdsc.edu/datasetMetadata?otCollectionID=OT." + requested_id
@@ -84,15 +87,17 @@ def short_name_creator(lidar_raster, requested_id, user_request):
 		print "Dataset is private and unavailable for download"
 		exit()
 
-#========================================================================================
-#Function: private_bits 																
-#    																					
-#input:		lidar_raster - String to determine whether to work with Lidar or Raster data
-#																						
-#desc: 		Create a list of bits (0 for public, 1 for private) to determine whether	
-#			the dataset is public or private on OpenTopography's website 				
-#========================================================================================
-def private_bits(lidar_raster):
+
+
+def private_bits(data_type):
+	"""Determine whether data are public or private
+
+	Args:
+		data_type: string indicating Lidar or Raster data
+
+	Returns:
+		a list of bits (0 for public, 1 for private)
+	"""
 	# Globals #
 	global lidar_name_list
 	global lidar_private_bit_list
@@ -103,10 +108,10 @@ def private_bits(lidar_raster):
 	private_bit_list = []
 
 	#Determine which lists to use
-	if lidar_raster == "PC_Bulk":
+	if data_type == "PC_Bulk":
 		name_list = lidar_name_list
 		private_bit_list = lidar_private_bit_list
-	elif lidar_raster == "Raster":
+	elif data_type == "Raster":
 		name_list = raster_name_list
 		private_bit_list = raster_private_bit_list
 
@@ -117,46 +122,55 @@ def private_bits(lidar_raster):
 		else:
 			private_bit_list.append(0)
 
-#========================================================================================
-#Function: URL_creator
-#
-#input:		lidar_raster - String to determine whether to work with Lidar or Raster data
-#
-#desc:		Create the proper URL string and href regex in addition to assigning
-#			the proper global name and ID lists
-#========================================================================================
-def URL_creator(lidar_raster):
+
+
+def create_URL(data_type):
+	"""Create URLs to data
+
+	Creates a proper URL string and href regex,
+		assigns the global name and ID lists
+
+	Args:
+		data_type: string indicating lidar or raster data
+
+	Returns:
+		A tuple containing the URL, name list, id list, and href
+	"""
 	global lidar_name_list
 	global lidar_ID_list
 	global raster_name_list
 	global raster_ID_list
 
-	if lidar_raster == "PC_Bulk":
+	if data_type == "PC_Bulk":
 		URL = "http://opentopo.sdsc.edu/lidar"
 		name_list = lidar_name_list
 		ID_list = lidar_ID_list
 		href = '^/lidarDataset*'
-		return URL, name_list, ID_list, href
-	elif lidar_raster == "Raster":
+	elif data_type == "Raster":
 		URL = "http://opentopo.sdsc.edu/lidar?format=sd"
 		name_list = raster_name_list
 		ID_list = raster_ID_list
 		href = '^/raster*'
-		return URL, name_list, ID_list, href
 	else:
 		raise Exception('Invalid dataset type')
+	return URL, name_list, ID_list, href
 
-#========================================================================================
-#Function: list_creator
-#
-#input:		cells - HTML 'a' tags
-#			lidar_raster - String to determine whether to work with Lidar or Raster data
-#			name_list - List of dataset long names
-#			ID_list - List of dataset ID numbers
-#
-#desc:		Create lists of long names and ID numbers from the acquired HTML
-#========================================================================================
-def list_creator(cells, lidar_raster, name_list, ID_list):
+
+
+def append_lists(cells, data_type, name_list, ID_list):
+	"""Append long names and ID #'s to name & ID lists
+
+	Create lists of long names and ID numbers from the acquired HTML
+
+	Args:
+		cells: HTML 'a' tags
+		data_type: string indicating lidar or raster data
+		name_list: List of dataset long names
+		ID_list: List of dataset ID numbers
+
+	Returns:
+		None
+	"""
 	for i in range(0, len(cells)):
 		long_name = cells[i].string
 		if long_name == None:
@@ -164,21 +178,27 @@ def list_creator(cells, lidar_raster, name_list, ID_list):
 		else:
 			name_list.append(long_name)
 
-		if lidar_raster == "PC_Bulk":
+		if data_type == "PC_Bulk":
 			ID = str(cells[i]['href'])[31:]
-		elif lidar_raster == "Raster":
+		elif data_type == "Raster":
 			ID = str(cells[i]['href'])[26:]
 		ID_list.append(ID)
 
-#========================================================================================
-#Function: area_listing																	
-#																						
-#input:		lidar_raster - String to determing whether to list Lidar or Raster data     
-#																						
-#desc:		List the available Lidar or Raster datasets on OpenTopography's website and
-#			create lists of data's long names, ID numbers, and private bits   
-#========================================================================================
-def area_listing(lidar_raster, cmd_line):
+
+
+def area_listing(data_type, cmd_line):
+	"""List available data
+
+	List the available Lidar or Raster datasets on OpenTopography's website and
+	create lists of data's long names, ID numbers, and private bits
+
+	Args:
+		data_type: string indicating lidar or raster data
+
+	Returns:
+		Integer indicating the desired dataset if not using command line,
+			otherwise returns nothing.
+	"""
 	# Globals #
 	global lidar_name_list
 	global raster_name_list
@@ -186,7 +206,7 @@ def area_listing(lidar_raster, cmd_line):
 	global raster_ID_list
 
 	#Obtain the proper URL, name_list, ID_list, and href regex depending on what data format the user wants
-	URL, name_list, ID_list, href = URL_creator(lidar_raster)
+	URL, name_list, ID_list, href = create_URL(data_type)
 
 	#Find all the datasets listed on OpenTopography's website
 	page = urllib2.urlopen(URL)
@@ -194,10 +214,10 @@ def area_listing(lidar_raster, cmd_line):
 	table = soup.find("table", class_= "table table-hover table-condensed table-striped table-nospace")
 	for row in table.findAll("tr"):
 		cells = row.findAll('a', href = re.compile(href))
-		list_creator(cells, lidar_raster, name_list, ID_list)
+		append_lists(cells, data_type, name_list, ID_list)
 
 	#Determine whether the dataset is public or private
-	private_bits(lidar_raster)
+	private_bits(data_type)
 
 	if cmd_line == 0:
 		#Print to the user the available datasets
@@ -211,23 +231,27 @@ def area_listing(lidar_raster, cmd_line):
 
 		return int(user_request) - 1
 
-#========================================================================================
-#Function: downloader 																	
-#																						
-#input:		lidar_raster - String to determine whether to DL Lidar or Raster data       
-#			URL - URL to the HTTP directory storing files/sub-directories 				
-#			short_name - Short name corresponding to specific data files on  			
-#							OpenTopography 												
-#																						
-#desc:		Download all files immediately present and within subdirectories on 		
-#			OpenTopography's servers to the local machine with an identical file 		
-#			and subdirectory hierarchy 													
-#========================================================================================
-def downloader(lidar_raster, URL, short_name):
+
+
+def download_data(data_type, URL, short_name):
+	"""Download files from OpenTopo
+
+	Downloads all files immediately present and within subdirectories on
+		OpenTopography's servers to the local machine with an identical file
+		and subdirectory hierarchy
+
+	Args:
+		data_type: string indicating lidar or raster data
+		URL: URL to the HTTP directory storing files/sub-directories
+		short_name: short name corresponding to specific data files
+
+	Returns:
+		nothing
+	"""
 	#Obtain the proper, initial URL
-	if lidar_raster == "PC_Bulk" and URL == 0:
+	if data_type == "PC_Bulk" and URL == 0:
 		URL = "https://cloud.sdsc.edu/v1/AUTH_opentopography/PC_Bulk/" + short_name + "/"
-	elif lidar_raster == "Raster" and URL == 0:
+	elif data_type == "Raster" and URL == 0:
 		URL = "https://cloud.sdsc.edu/v1/AUTH_opentopography/Raster/" + short_name + "/"
 
 	#Find all files and sub-directories within the HTML of the page
@@ -239,7 +263,7 @@ def downloader(lidar_raster, URL, short_name):
 
 	#Obtain/create local directories to save files to
 	source_directory = os.getcwd()
-	data_directory = source_directory + "\\" + short_name
+	data_directory = os.path.join(source_directory, short_name)
 
 	#Check and see if the local directory currently exists or not
 	if os.path.exists(data_directory):
@@ -264,7 +288,9 @@ def downloader(lidar_raster, URL, short_name):
 		sub_dir_name = sub_dirs[i].a["href"]
 		sub_dir_URL = URL + sub_dir_name
 		os.chdir(data_directory)
-		downloader(lidar_raster, sub_dir_URL, sub_dir_name)
+		download_data(data_type, sub_dir_URL, sub_dir_name)
+
+
 
 def main(argv):
 
@@ -276,37 +302,35 @@ def main(argv):
 	global raster_ID_list
 	global raster_private_bit_list
 
-	lidar_raster = 0			#Boolean condition to check if user wants lidar or raster data. "PC_Bulk" = lidar. "Raster" = raster
-	user_request = 0			#Number corresponding to the dataset the user wants to download
-	cmd_line = 0				#Boolean corresponding to whether or not the user wants to run the script with 1 command
+	data_type = 0	# Boolean to check if user wants lidar or raster data "PC_Bulk" = lidar. "Raster" = raster
+	user_request = 0	# number corresponding to dataset user wants to download
+	cmd_line = 0		# Boolean does user want to run script with 1 command
 
-	#Logic/functions if the user wants to run the script directly from the command line with no user input
-	if len(argv) > 1:
+	if len(argv) > 1: 	# arguments were supplied at command line
 		cmd_line = 1
 		if argv[1] == "l":
-			lidar_raster = "PC_Bulk"
+			data_type = "PC_Bulk"
 		elif argv[1] == "r":
-			lidar_raster = "Raster"
+			data_type = "Raster"
 		else:
 			print "Invalid input"
 		user_request = int(argv[2]) - 1
-		area_listing(lidar_raster, cmd_line)
+		area_listing(data_type, cmd_line)
 
-	#Logic/functions if the user does not want to run the script from the command line and wants to have user input
-	else:
+	else:				# arguments were not supplied, running interactively
 		print "\n"
 		print "OpenTopo Downloader - Python script to download data from OpenTopography"
 		print "When asked for user input, please enter the corresponding letter/number in the square brackets, []\n"
-		lidar_raster = lidar_vs_raster()
-		user_request = area_listing(lidar_raster, cmd_line)
+		data_type = get_data_type()
+		user_request = area_listing(data_type, cmd_line)
 
-	if lidar_raster == "PC_Bulk":
+	if data_type == "PC_Bulk":
 		requested_id = lidar_ID_list[user_request]
 	else:
 		requested_id = raster_ID_list[user_request]
 
-	short_name = short_name_creator(lidar_raster, requested_id, user_request)
-	downloader(lidar_raster, 0, short_name)
+	short_name = get_short_name(data_type, requested_id, user_request)
+	download_data(data_type, 0, short_name)
 
 
 if __name__ == "__main__":
